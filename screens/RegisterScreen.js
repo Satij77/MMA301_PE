@@ -1,8 +1,10 @@
 // screens/RegisterScreen.js
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, ImageBackground } from 'react-native';
+import { TextInput, Button, Text, Appbar } from 'react-native-paper';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../firebaseConfig';
+import { MaterialIcons } from '@expo/vector-icons';
 
 const RegisterScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
@@ -18,65 +20,85 @@ const RegisterScreen = ({ navigation }) => {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Register</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Email"
-        value={email}
-        onChangeText={setEmail}
-        keyboardType="email-address"
-        autoCapitalize="none"
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-      />
-      <TouchableOpacity style={styles.button} onPress={handleRegister}>
-        <Text style={styles.buttonText}>Register</Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Login')}>
-        <Text style={styles.buttonText}>Login</Text>
-      </TouchableOpacity>
-    </View>
+    <ImageBackground
+      source={{ uri: 'https://img.freepik.com/free-photo/blue-wallpaper-with-blue-background_1340-27532.jpg?t=st=1730461846~exp=1730465446~hmac=93d6d154e868da89b554f4c80fae2688800d13345bd2947734e185728638c0fe&w=740' }}
+      style={styles.background}
+      resizeMode="cover"
+    >
+      <View style={styles.container}>
+        <Appbar.Header style={styles.appbar}>
+          <Appbar.Content title="Create an Account" titleStyle={styles.title} />
+        </Appbar.Header>
+        <TextInput
+          label="Email"
+          value={email}
+          onChangeText={setEmail}
+          style={styles.input}
+          mode="outlined"
+          left={<TextInput.Icon icon={() => <MaterialIcons name="email" size={20} />} />}
+        />
+        <TextInput
+          label="Password"
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry
+          style={styles.input}
+          mode="outlined"
+          left={<TextInput.Icon icon={() => <MaterialIcons name="lock" size={20} />} />}
+        />
+        <Button mode="contained" onPress={handleRegister} style={styles.registerButton} labelStyle={styles.buttonText}>
+          Register
+        </Button>
+        <Button mode="text" onPress={() => navigation.navigate('Login')} style={styles.loginButton}>
+          Already have an account? Login
+        </Button>
+      </View>
+    </ImageBackground>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  background: {
     flex: 1,
     justifyContent: 'center',
-    padding: 16,
-    backgroundColor: '#f5f5f5',
+  },
+  container: {
+    padding: 20,
+    borderRadius: 10,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    marginHorizontal: 16,
+  },
+  appbar: {
+    backgroundColor: 'transparent',
+    elevation: 0,
   },
   title: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: 'bold',
     textAlign: 'center',
-    marginBottom: 24,
+    color: '#0340bd',
   },
   input: {
-    height: 50,
-    borderColor: '#ccc',
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 16,
     marginBottom: 16,
-    backgroundColor: '#fff',
   },
-  button: {
-    backgroundColor: '#007BFF',
-    paddingVertical: 12,
-    borderRadius: 8,
-    marginBottom: 16,
+  registerButton: {
+    marginTop: 16,
+    borderRadius: 25,
+    paddingVertical: 8,
+    backgroundColor: '#0340bd',
+    shadowColor: '#0340bd',
+    shadowOpacity: 1.5,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 4,
+  },
+  loginButton: {
+    marginTop: 16,
+    textAlign: 'center',
+    fontWeight: '600',
+    color: '#0340bd',
   },
   buttonText: {
-    color: '#fff',
-    textAlign: 'center',
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
   },
 });

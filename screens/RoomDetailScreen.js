@@ -9,13 +9,18 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
-  Platform
+  Platform,
+  Dimensions
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 import { doc, getDoc, collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 import MapView, { Marker } from 'react-native-maps';
 import { AuthContext } from '../context/AuthContext';
 import DateTimePicker from '@react-native-community/datetimepicker';
+
+const { width } = Dimensions.get('window');
 
 const RoomDetailScreen = ({ route, navigation }) => {
   const { roomId } = route.params;
@@ -68,9 +73,9 @@ const RoomDetailScreen = ({ route, navigation }) => {
       const bookingRef = collection(db, 'bookings');
       await addDoc(bookingRef, {
         roomId,
-        bookingDate: selectedDate.toISOString(),  // Chỉ lưu ngày đặt phòng
-        userId: currentUser.uid, // Nếu bạn muốn lưu ID người dùng
-        createdAt: serverTimestamp(), // Sử dụng serverTimestamp để lưu thời gian hiện tại
+        bookingDate: selectedDate.toISOString(),
+        userId: currentUser.uid,
+        createdAt: serverTimestamp(),
       });
       
       Alert.alert(
@@ -96,7 +101,7 @@ const RoomDetailScreen = ({ route, navigation }) => {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#0000ff" />
+        <ActivityIndicator size="large" color="#0340bd" />
       </View>
     );
   }
@@ -110,34 +115,60 @@ const RoomDetailScreen = ({ route, navigation }) => {
   }
 
   return (
-    <ScrollView style={styles.container}>
-      <Image 
-        source={{ uri: room.image }} 
-        style={styles.image}
-        resizeMode="cover"
-      />
+    <ScrollView 
+      style={styles.container}
+      showsVerticalScrollIndicator={false}
+    >
+      <View style={styles.imageContainer}>
+        <Image 
+          source={{ uri: room.image }} 
+          style={styles.image}
+          blurRadius={1}
+        />
+        <LinearGradient
+          colors={['transparent', 'rgba(0,0,0,0.8)']}
+          style={styles.imageOverlay}
+        />
+        <TouchableOpacity 
+          style={styles.backButton} 
+          onPress={() => navigation.goBack()}
+        >
+          <Ionicons name="arrow-back" size={24} color="white" />
+        </TouchableOpacity>
+      </View>
       
       <View style={styles.contentContainer}>
-        <Text style={styles.location}>{room.location}</Text>
-        <Text style={styles.price}>Price: ${room.price}/night</Text>
+        <View style={styles.headerContainer}>
+          <Text style={styles.location}>{room.location}</Text>
+          <View style={styles.priceContainer}>
+            <Text style={styles.price}>VND {room.price}</Text>
+          </View>
+        </View>
+
         <Text style={styles.description}>{room.description}</Text>
         
-        <Text style={styles.sectionTitle}>Amenities:</Text>
-        <FlatList
-          data={room.amenities}
-          keyExtractor={(item) => item}
-          renderItem={({ item }) => (
-            <Text style={styles.amenityItem}>• {item}</Text>
-          )}
-          scrollEnabled={false}
-        />
+        <View style={styles.sectionContainer}>
+          <Text style={styles.sectionTitle}>Amenities</Text>
+          <FlatList
+            data={room.amenities}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            keyExtractor={(item) => item}
+            renderItem={({ item }) => (
+              <View style={styles.amenityChip}>
+                <Text style={styles.amenityText}>{item}</Text>
+              </View>
+            )}
+          />
+        </View>
 
-        <View style={styles.datePickerContainer}>
-          <Text style={styles.sectionTitle}>Select Date:</Text>
+        <View style={styles.sectionContainer}>
+          <Text style={styles.sectionTitle}>Select Date</Text>
           <TouchableOpacity 
             style={styles.dateButton} 
             onPress={showDatepicker}
           >
+            <Ionicons name="calendar" size={20} color="#0340bd" />
             <Text style={styles.dateButtonText}>
               {selectedDate.toLocaleDateString()}
             </Text>
@@ -154,31 +185,38 @@ const RoomDetailScreen = ({ route, navigation }) => {
           )}
         </View>
 
-        <MapView
-          style={styles.map}
-          initialRegion={{
-            latitude: room.latitude,
-            longitude: room.longitude,
-            latitudeDelta: 0.01,
-            longitudeDelta: 0.01,
-          }}
-        >
-          <Marker 
-            coordinate={{ 
-              latitude: room.latitude, 
-              longitude: room.longitude 
-            }} 
-          />
-        </MapView>
+        <View style={styles.sectionContainer}>
+          <Text style={styles.sectionTitle}>Location</Text>
+          <MapView
+            style={styles.map}
+            initialRegion={{
+              latitude: room.latitude,
+              longitude: room.longitude,
+              latitudeDelta: 0.01,
+              longitudeDelta: 0.01,
+            }}
+          >
+            <Marker 
+              coordinate={{ 
+                latitude: room.latitude, 
+                longitude: room.longitude 
+              }} 
+            />
+          </MapView>
+        </View>
 
         <TouchableOpacity
           style={styles.bookButton}
           onPress={handleBooking}
         >
-          <Text style={styles.bookButtonText}>Book Now</Text>
+          <LinearGradient
+            colors={['#040229', '#0340bd']}
+            style={styles.bookButtonGradient}
+          >
+            <Text style={styles.bookButtonText}>Book Now</Text>
+          </LinearGradient>
         </TouchableOpacity>
 
-        {/* Nút chuyển đến xem danh sách đặt phòng */}
         <TouchableOpacity
           style={styles.viewBookingsButton}
           onPress={() => navigation.navigate("Booking")}
@@ -193,92 +231,140 @@ const RoomDetailScreen = ({ route, navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#f4f4f4',
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: '#f4f4f4',
+  },
+  imageContainer: {
+    width: '100%',
+    height: 300,
   },
   image: {
     width: '100%',
-    height: 250,
+    height: '100%',
+    position: 'absolute',
+  },
+  imageOverlay: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  backButton: {
+    position: 'absolute',
+    top: 40,
+    left: 20,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    borderRadius: 30,
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   contentContainer: {
-    padding: 16,
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+    marginTop: -30,
+    paddingTop: 30,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+  },
+  headerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 15,
   },
   location: {
     fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 8,
+    color: '#333',
+    flex: 1,
+  },
+  priceContainer: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
   },
   price: {
-    fontSize: 18,
-    color: '#2196F3',
-    marginBottom: 8,
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#0340bd',
   },
+  
   description: {
     fontSize: 16,
     color: '#666',
-    marginBottom: 16,
+    marginBottom: 20,
     lineHeight: 24,
+  },
+  sectionContainer: {
+    marginBottom: 20,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    marginTop: 16,
-    marginBottom: 8,
+    marginBottom: 10,
+    color: '#333',
   },
-  amenityItem: {
-    fontSize: 16,
-    marginLeft: 8,
-    marginBottom: 4,
-    color: '#444',
+  amenityChip: {
+    backgroundColor: '#f0f0f0',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+    marginRight: 10,
   },
-  datePickerContainer: {
-    marginVertical: 16,
+  amenityText: {
+    color: '#333',
+    fontSize: 14,
+    fontWeight: 'bold',
   },
   dateButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: '#f0f0f0',
     padding: 12,
-    borderRadius: 8,
-    marginTop: 8,
+    borderRadius: 10,
   },
   dateButtonText: {
     fontSize: 16,
-    textAlign: 'center',
+    marginLeft: 10,
     color: '#333',
   },
   map: {
     width: '100%',
     height: 200,
-    marginVertical: 16,
-    borderRadius: 8,
+    borderRadius: 15,
   },
   bookButton: {
-    backgroundColor: '#2196F3',
+    marginTop: 20,
+    borderRadius: 15,
+    overflow: 'hidden',
+  },
+  bookButtonGradient: {
     padding: 16,
-    borderRadius: 8,
-    marginTop: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   bookButtonText: {
     color: '#fff',
     fontSize: 18,
     fontWeight: 'bold',
-    textAlign: 'center',
   },
   viewBookingsButton: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: '#f0f0f0',
     padding: 16,
-    borderRadius: 8,
-    marginTop: 16,
+    borderRadius: 15,
+    marginTop: 15,
   },
   viewBookingsButtonText: {
-    color: '#fff',
+    color: '#0340bd',
     fontSize: 18,
     fontWeight: 'bold',
     textAlign: 'center',
   },
+  
 });
 
 export default RoomDetailScreen;
